@@ -1,0 +1,638 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="description" content="Priority Matrix - Organize your tasks using the Eisenhower Matrix method. Prioritize by urgency and importance for maximum productivity." />
+    <title>Priority Matrix - {{ user.username }}</title>
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="{% static 'favicon.svg' %}?v=2.0">
+    <link rel="stylesheet" href="{% static 'styles.css' %}?v=2.1" />
+    <!-- GSAP Animation Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/Draggable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/TextPlugin.min.js"></script>
+    <style>
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .username-badge {
+            padding: 0.5rem 1rem;
+            background: rgba(37, 99, 235, 0.1);
+            border: 1px solid rgba(37, 99, 235, 0.3);
+            border-radius: 8px;
+            color: #60a5fa;
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+        .logout-btn {
+            padding: 0.5rem 1rem;
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #fca5a5;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+        .logout-btn:hover {
+            background: rgba(239, 68, 68, 0.2);
+            border-color: rgba(239, 68, 68, 0.4);
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app">
+        <header>
+            <h1>Priority Matrix</h1>
+            <nav class="header-nav">
+                <div class="user-info">
+                    <span class="username-badge">👤 {{ user.username }}</span>
+                    <button id="helpBtn" class="help-btn" type="button" aria-label="Open Help">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <circle cx="12" cy="17" r="0.5" fill="currentColor" stroke="currentColor" stroke-width="2"/>
+                        </svg>
+                        Help
+                    </button>
+                    <button id="settingsBtn" class="settings-btn" type="button" aria-label="Open Settings">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="m19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1 1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        Settings
+                    </button>
+                    <form method="POST" action="{% url 'tasks:logout' %}" style="margin: 0;">
+                        {% csrf_token %}
+                        <button type="submit" class="logout-btn">Logout</button>
+                    </form>
+                </div>
+            </nav>
+        </header>
+                <main class="layout">
+                        <section class="matrix" aria-label="Eisenhower Matrix">
+                                <div class="axis x-axis">
+                                    <span class="left">Urgent</span>
+                                    <span class="right">Not Urgent</span>
+                                </div>
+                                <div class="axis y-axis">
+                                    <span class="top">Important</span>
+                                    <span class="bottom">Not Important</span>
+                                </div>
+                                <div class="matrix-grid">
+                    <div class="quadrant" data-quadrant="q1">
+                        <div class="drop-zone" data-zone="q1"></div>
+                    </div>
+                    <div class="quadrant" data-quadrant="q2">
+                        <div class="drop-zone" data-zone="q2"></div>
+                    </div>
+                    <div class="quadrant" data-quadrant="q3">
+                        <div class="drop-zone" data-zone="q3"></div>
+                    </div>
+                    <div class="quadrant" data-quadrant="q4">
+                        <div class="drop-zone" data-zone="q4"></div>
+                    </div>
+                </div>
+            </section>
+                        <section class="tasks" aria-label="Tasks List">
+                            <h2>Tasks</h2>
+                            <div class="task-tabs" role="tablist" aria-label="Task views">
+                                <button id="tabActive" class="tab active" role="tab" aria-selected="true" aria-controls="panelActive" title="Tasks not yet assigned to a quadrant">Not Assigned (<span id="activeCount">0</span>)</button>
+                                <button id="tabCompleted" class="tab" role="tab" aria-selected="false" aria-controls="panelCompleted">Completed (<span id="completedCount">0</span>)</button>
+                                <button id="tabQ1" class="tab" role="tab" aria-selected="false" aria-controls="panelQ1" title="Urgent & Important">Urgent & Important (<span id="q1Count">0</span>)</button>
+                                <button id="tabQ2" class="tab" role="tab" aria-selected="false" aria-controls="panelQ2" title="Important • Not Urgent">Important · Not Urgent (<span id="q2Count">0</span>)</button>
+                                <button id="tabQ3" class="tab" role="tab" aria-selected="false" aria-controls="panelQ3" title="Urgent • Not Important">Urgent · Not Important (<span id="q3Count">0</span>)</button>
+                                <button id="tabQ4" class="tab" role="tab" aria-selected="false" aria-controls="panelQ4" title="Not Urgent • Not Important">Not Urgent · Not Important (<span id="q4Count">0</span>)</button>
+                                <button id="tabAll" class="tab" role="tab" aria-selected="false" aria-controls="panelAll" title="All tasks">All Tasks (<span id="allCount">0</span>)</button>
+                            </div>
+                            <div class="tab-panels">
+                                <div id="panelActive" class="tab-panel" role="tabpanel">
+                                    <ul id="taskList" class="task-list" aria-label="Not assigned tasks list"></ul>
+                                    <div id="addControl">
+                                        <button id="addTaskBtn" class="add-btn" type="button">+ Add</button>
+                                    </div>
+                                </div>
+                                <div id="panelCompleted" class="tab-panel hidden" role="tabpanel" aria-hidden="true">
+                                    <ul id="completedList" class="completed-list" aria-label="Completed tasks list"></ul>
+                                </div>
+                                <div id="panelQ1" class="tab-panel hidden" role="tabpanel" aria-hidden="true">
+                                    <ul id="q1List" class="task-list" aria-label="Urgent & Important tasks"></ul>
+                                </div>
+                                <div id="panelQ2" class="tab-panel hidden" role="tabpanel" aria-hidden="true">
+                                    <ul id="q2List" class="task-list" aria-label="Important not urgent tasks"></ul>
+                                </div>
+                                <div id="panelQ3" class="tab-panel hidden" role="tabpanel" aria-hidden="true">
+                                    <ul id="q3List" class="task-list" aria-label="Urgent not important tasks"></ul>
+                                </div>
+                                <div id="panelQ4" class="tab-panel hidden" role="tabpanel" aria-hidden="true">
+                                    <ul id="q4List" class="task-list" aria-label="Not urgent not important tasks"></ul>
+                                </div>
+                                <div id="panelAll" class="tab-panel hidden" role="tabpanel" aria-hidden="true">
+                                    <ul id="allList" class="task-list" aria-label="All tasks list"></ul>
+                                </div>
+                            </div>
+                        </section>
+        </main>
+        
+        <!-- Settings Modal -->
+        <div id="settingsModal" class="settings-modal hidden" role="dialog" aria-labelledby="settingsTitle" aria-modal="true">
+            <div class="settings-backdrop"></div>
+            <div class="settings-content">
+                <div class="settings-header">
+                    <h2 id="settingsTitle">Customization Settings</h2>
+                    <button id="closeSettingsBtn" class="close-settings-btn" type="button" aria-label="Close Settings">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                </div>
+                
+                <div class="settings-body">
+                    <div class="settings-tabs">
+                        <button class="settings-tab active" data-tab="typography">Typography</button>
+                        <button class="settings-tab" data-tab="colors">Colors & Theme</button>
+                        <button class="settings-tab" data-tab="layout">Layout</button>
+                        <button class="settings-tab" data-tab="advanced">Advanced</button>
+                    </div>
+                    
+                    <div class="settings-panels">
+                        <!-- Typography Panel -->
+                        <div class="settings-panel active" data-panel="typography">
+                            <div class="setting-group">
+                                <label for="fontSize" class="setting-label">Base Font Size</label>
+                                <div class="range-input">
+                                    <input type="range" id="fontSize" min="12" max="20" value="16" class="setting-slider">
+                                    <span class="range-value">16px</span>
+                                </div>
+                            </div>
+                            
+                            <div class="setting-group">
+                                <label for="fontWeight" class="setting-label">Font Weight</label>
+                                <select id="fontWeight" class="setting-input">
+                                    <option value="300">Light (300)</option>
+                                    <option value="400" selected>Normal (400)</option>
+                                    <option value="500">Medium (500)</option>
+                                    <option value="600">Semi-Bold (600)</option>
+                                    <option value="700">Bold (700)</option>
+                                </select>
+                            </div>
+                            
+                            <div class="setting-group">
+                                <label for="lineHeight" class="setting-label">Line Height</label>
+                                <div class="range-input">
+                                    <input type="range" id="lineHeight" min="1.0" max="2.0" step="0.1" value="1.4" class="setting-slider">
+                                    <span class="range-value">1.4</span>
+                                </div>
+                            </div>
+                            
+                            <div class="setting-group">
+                                <label for="letterSpacing" class="setting-label">Letter Spacing</label>
+                                <div class="range-input">
+                                    <input type="range" id="letterSpacing" min="-0.5" max="2" step="0.1" value="0" class="setting-slider">
+                                    <span class="range-value">0px</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Colors & Theme Panel -->
+                        <div class="settings-panel" data-panel="colors">
+                            <div class="setting-group">
+                                <label class="setting-label">Theme Preset</label>
+                                <div class="theme-presets">
+                                    <button class="theme-preset active" data-theme="dark">
+                                        <div class="theme-preview dark-theme"></div>
+                                        <span>Dark</span>
+                                    </button>
+                                    <button class="theme-preset" data-theme="light">
+                                        <div class="theme-preview light-theme"></div>
+                                        <span>Light</span>
+                                    </button>
+                                    <button class="theme-preset" data-theme="blue">
+                                        <div class="theme-preview blue-theme"></div>
+                                        <span>Blue</span>
+                                    </button>
+                                    <button class="theme-preset" data-theme="green">
+                                        <div class="theme-preview green-theme"></div>
+                                        <span>Green</span>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="setting-group">
+                                <label for="primaryColor" class="setting-label">Primary Color</label>
+                                <div class="color-input-group">
+                                    <input type="color" id="primaryColor" value="#2563eb" class="color-input">
+                                    <input type="text" id="primaryColorText" value="#2563eb" class="color-text">
+                                </div>
+                            </div>
+                            
+                            <div class="setting-group">
+                                <label for="accentColor" class="setting-label">Accent Color</label>
+                                <div class="color-input-group">
+                                    <input type="color" id="accentColor" value="#10b981" class="color-input">
+                                    <input type="text" id="accentColorText" value="#10b981" class="color-text">
+                                </div>
+                            </div>
+                            
+                            <div class="setting-group">
+                                <label for="backgroundColor" class="setting-label">Background Color</label>
+                                <div class="color-input-group">
+                                    <input type="color" id="backgroundColor" value="#0b1220" class="color-input">
+                                    <input type="text" id="backgroundColorText" value="#0b1220" class="color-text">
+                                </div>
+                            </div>
+                            
+                            <div class="setting-group">
+                                <label for="textColor" class="setting-label">Text Color</label>
+                                <div class="color-input-group">
+                                    <input type="color" id="textColor" value="#e2e8f0" class="color-input">
+                                    <input type="text" id="textColorText" value="#e2e8f0" class="color-text">
+                                </div>
+                            </div>
+                            
+                            <div class="setting-group">
+                                <label for="panelColor" class="setting-label">Panel Background</label>
+                                <div class="color-input-group">
+                                    <input type="color" id="panelColor" value="#0f172a" class="color-input">
+                                    <input type="text" id="panelColorText" value="#0f172a" class="color-text">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Layout Panel -->
+                        <div class="settings-panel" data-panel="layout">
+                            <div class="setting-group">
+                                <label for="borderRadius" class="setting-label">Border Radius</label>
+                                <div class="range-input">
+                                    <input type="range" id="borderRadius" min="0" max="20" value="12" class="setting-slider">
+                                    <span class="range-value">12px</span>
+                                </div>
+                                <div class="setting-description">Controls the roundness of corners for panels, buttons, and task items. Higher values = more rounded.</div>
+                            </div>
+                            
+                            <div class="setting-group">
+                                <label for="spacing" class="setting-label">Spacing Scale</label>
+                                <div class="range-input">
+                                    <input type="range" id="spacing" min="0.5" max="2" step="0.1" value="1" class="setting-slider">
+                                    <span class="range-value">1x</span>
+                                </div>
+                                <div class="setting-description">Adjusts gaps and margins throughout the interface. Lower = more compact, Higher = more spacious.</div>
+                            </div>
+                            
+                            <div class="setting-group">
+                                <label for="taskHeight" class="setting-label">Task Row Height</label>
+                                <div class="range-input">
+                                    <input type="range" id="taskHeight" min="40" max="80" value="56" class="setting-slider">
+                                    <span class="range-value">56px</span>
+                                </div>
+                                <div class="setting-description">Changes the height of each task row. Taller rows are easier to click/drag, shorter rows fit more on screen.</div>
+                            </div>
+                            
+                            <div class="setting-group">
+                                <label class="setting-label">
+                                    <input type="checkbox" id="compactMode" class="setting-checkbox">
+                                    Compact Mode
+                                </label>
+                                <div class="setting-description">Reduces padding and spacing throughout the app for a more compact layout. Good for smaller screens.</div>
+                            </div>
+                            
+                            <div class="setting-group">
+                                <label class="setting-label">
+                                    <input type="checkbox" id="showNumbers" class="setting-checkbox" checked>
+                                    Show Task Numbers
+                                </label>
+                                <div class="setting-description">Display task numbers (#1, #2, etc.) next to each task. Helpful for tracking and referencing tasks.</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Advanced Panel -->
+                        <div class="settings-panel" data-panel="advanced">
+                            <div class="setting-group">
+                                <label for="customCSS" class="setting-label">Custom CSS</label>
+                                <textarea id="customCSS" class="setting-textarea" placeholder="/* Add your custom CSS here */&#10;.task-item {&#10;  /* Custom styling */&#10;}"></textarea>
+                                <div class="setting-description">Add custom CSS to override default styles</div>
+                            </div>
+                            
+                            <div class="setting-group">
+                                <label class="setting-label">Export/Import Settings</label>
+                                <div class="button-group">
+                                    <button id="exportSettings" class="secondary-btn">Export Settings</button>
+                                    <button id="importSettings" class="secondary-btn">Import Settings</button>
+                                    <input type="file" id="importFile" accept=".json" style="display: none;">
+                                </div>
+                            </div>
+                            
+                            <div class="setting-group">
+                                <label class="setting-label">Reset Options</label>
+                                <div class="button-group">
+                                    <button id="resetSettings" class="danger-btn">Reset Settings</button>
+                                    <button id="resetTasks" class="danger-btn">Reset Tasks</button>
+                                </div>
+                                <div class="setting-description">Reset settings to defaults or delete all your tasks</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="settings-footer">
+                    <button id="saveSettings" class="primary-btn">Save Changes</button>
+                    <button id="cancelSettings" class="secondary-btn">Cancel</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Help Modal -->
+        <div id="helpModal" class="help-modal hidden" role="dialog" aria-labelledby="helpTitle" aria-modal="true">
+            <div class="help-backdrop"></div>
+            <div class="help-content">
+                <div class="help-header">
+                    <h2 id="helpTitle">📖 How to Use Priority Matrix</h2>
+                    <button id="closeHelpBtn" class="close-help-btn" type="button" aria-label="Close Help">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                </div>
+                
+                <div class="help-body">
+                    <!-- Welcome Section -->
+                    <section class="help-section">
+                        <h3 class="help-section-title">👋 Welcome!</h3>
+                        <p class="help-text">Priority Matrix helps you organize tasks using the <strong>Eisenhower Matrix</strong> method. This proven technique helps you prioritize by urgency and importance, making you more productive and focused.</p>
+                    </section>
+
+                    <!-- Getting Started -->
+                    <section class="help-section">
+                        <h3 class="help-section-title">🚀 Getting Started</h3>
+                        <div class="help-steps">
+                            <div class="help-step">
+                                <div class="help-step-number">1</div>
+                                <div class="help-step-content">
+                                    <h4>Add Your First Task</h4>
+                                    <p>Click the <strong>"+ Add"</strong> button in the Tasks panel to create a new task. Give it a meaningful title.</p>
+                                </div>
+                            </div>
+                            <div class="help-step">
+                                <div class="help-step-number">2</div>
+                                <div class="help-step-content">
+                                    <h4>Drag to Prioritize</h4>
+                                    <p>Grab the colored token (circle with task number) and drag it to the appropriate quadrant on the matrix.</p>
+                                </div>
+                            </div>
+                            <div class="help-step">
+                                <div class="help-step-number">3</div>
+                                <div class="help-step-content">
+                                    <h4>Complete Tasks</h4>
+                                    <p>Click the checkmark (✔) button on any task to mark it as done. Completed tasks move to the Completed tab.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Understanding the Matrix -->
+                    <section class="help-section">
+                        <h3 class="help-section-title">🎯 Understanding the Matrix</h3>
+                        <div class="help-quadrants">
+                            <div class="help-quadrant q1-help">
+                                <div class="help-quadrant-icon" style="background: #ef4444;">1</div>
+                                <div class="help-quadrant-content">
+                                    <h4>🔴 Urgent & Important</h4>
+                                    <p><strong>Do First:</strong> Critical tasks that need immediate attention.</p>
+                                    <ul>
+                                        <li>Deadlines today or tomorrow</li>
+                                        <li>Emergencies and crises</li>
+                                        <li>Critical meetings or calls</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="help-quadrant q2-help">
+                                <div class="help-quadrant-icon" style="background: #f59e0b;">2</div>
+                                <div class="help-quadrant-content">
+                                    <h4>🟡 Important • Not Urgent</h4>
+                                    <p><strong>Schedule:</strong> Important tasks to plan and work on strategically.</p>
+                                    <ul>
+                                        <li>Long-term projects and goals</li>
+                                        <li>Planning and strategy</li>
+                                        <li>Personal development and learning</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="help-quadrant q3-help">
+                                <div class="help-quadrant-icon" style="background: #10b981;">3</div>
+                                <div class="help-quadrant-content">
+                                    <h4>🟢 Urgent • Not Important</h4>
+                                    <p><strong>Delegate:</strong> Tasks that need doing but not by you.</p>
+                                    <ul>
+                                        <li>Interruptions and distractions</li>
+                                        <li>Some calls, emails, meetings</li>
+                                        <li>Tasks others can handle</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="help-quadrant q4-help">
+                                <div class="help-quadrant-icon" style="background: #94a3b8;">4</div>
+                                <div class="help-quadrant-content">
+                                    <h4>⚪ Not Urgent • Not Important</h4>
+                                    <p><strong>Eliminate:</strong> Time-wasters to minimize or remove.</p>
+                                    <ul>
+                                        <li>Busywork and trivial tasks</li>
+                                        <li>Excessive social media browsing</li>
+                                        <li>Activities that don't align with goals</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Key Features -->
+                    <section class="help-section">
+                        <h3 class="help-section-title">✨ Key Features</h3>
+                        <div class="help-features">
+                            <div class="help-feature">
+                                <div class="help-feature-icon">🎨</div>
+                                <div class="help-feature-content">
+                                    <h4>Color-Coded Tasks</h4>
+                                    <p>Each task gets a unique color for easy visual identification across the matrix.</p>
+                                </div>
+                            </div>
+                            <div class="help-feature">
+                                <div class="help-feature-icon">🔢</div>
+                                <div class="help-feature-content">
+                                    <h4>Task Numbers</h4>
+                                    <p>Every task has a unique number displayed on its token for quick reference.</p>
+                                </div>
+                            </div>
+                            <div class="help-feature">
+                                <div class="help-feature-icon">🔄</div>
+                                <div class="help-feature-content">
+                                    <h4>Drag & Drop</h4>
+                                    <p>Move tasks between quadrants by dragging their tokens. Drag back to a task to return it to the list.</p>
+                                </div>
+                            </div>
+                            <div class="help-feature">
+                                <div class="help-feature-icon">📊</div>
+                                <div class="help-feature-content">
+                                    <h4>Multiple Views</h4>
+                                    <p>Switch between tabs to see tasks by status: Not Assigned, Completed, or by each quadrant.</p>
+                                </div>
+                            </div>
+                            <div class="help-feature">
+                                <div class="help-feature-icon">✏️</div>
+                                <div class="help-feature-content">
+                                    <h4>Edit Tasks</h4>
+                                    <p>Click the pencil icon or select a task and press F2 to rename it.</p>
+                                </div>
+                            </div>
+                            <div class="help-feature">
+                                <div class="help-feature-icon">☁️</div>
+                                <div class="help-feature-content">
+                                    <h4>Cloud Sync</h4>
+                                    <p>Your tasks are saved to the server and accessible from any device with your account.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Keyboard Shortcuts -->
+                    <section class="help-section">
+                        <h3 class="help-section-title">⌨️ Keyboard Shortcuts</h3>
+                        <div class="help-shortcuts">
+                            <div class="help-shortcut">
+                                <kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> <kbd>4</kbd>
+                                <span>Move selected task to quadrant 1, 2, 3, or 4</span>
+                            </div>
+                            <div class="help-shortcut">
+                                <kbd>0</kbd> or <kbd>Backspace</kbd>
+                                <span>Return selected task to the task list</span>
+                            </div>
+                            <div class="help-shortcut">
+                                <kbd>Space</kbd>
+                                <span>Toggle task completion (mark done/undone)</span>
+                            </div>
+                            <div class="help-shortcut">
+                                <kbd>F2</kbd>
+                                <span>Rename selected task</span>
+                            </div>
+                            <div class="help-shortcut">
+                                <kbd>Esc</kbd>
+                                <span>Close modal dialogs or cancel editing</span>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Tips & Tricks -->
+                    <section class="help-section">
+                        <h3 class="help-section-title">💡 Tips & Tricks</h3>
+                        <ul class="help-tips">
+                            <li><strong>Hover over tokens:</strong> Hover over any token in the matrix to see the full task title in a tooltip.</li>
+                            <li><strong>Double-click to jump:</strong> Double-click a token in the matrix to jump to that task in the list.</li>
+                            <li><strong>Right-click menu:</strong> Right-click any token in the matrix for quick actions like marking done or deleting.</li>
+                            <li><strong>Shift+Click:</strong> Hold Shift and click a token to quickly mark it as done.</li>
+                            <li><strong>Click to select:</strong> Click any task in the list to select it (highlighted border).</li>
+                            <li><strong>Reorder in quadrants:</strong> Drag tokens within the same quadrant to reorder them.</li>
+                            <li><strong>Task counts:</strong> Each tab shows the number of tasks in that category.</li>
+                            <li><strong>Customize appearance:</strong> Use the Settings button to customize colors, fonts, and behavior.</li>
+                        </ul>
+                    </section>
+
+                    <!-- Best Practices -->
+                    <section class="help-section">
+                        <h3 class="help-section-title">🌟 Best Practices</h3>
+                        <div class="help-best-practices">
+                            <div class="help-practice">
+                                <h4>🎯 Start Each Day</h4>
+                                <p>Review your matrix at the start of each day. Focus on Quadrant 1 (Urgent & Important) first.</p>
+                            </div>
+                            <div class="help-practice">
+                                <h4>⏰ Schedule Quadrant 2</h4>
+                                <p>Block time for Quadrant 2 tasks (Important but not urgent). These drive long-term success.</p>
+                            </div>
+                            <div class="help-practice">
+                                <h4>🚫 Minimize Quadrant 4</h4>
+                                <p>Try to eliminate or minimize Quadrant 4 tasks. They're time-wasters.</p>
+                            </div>
+                            <div class="help-practice">
+                                <h4>🔄 Review Weekly</h4>
+                                <p>Do a weekly review to reassess priorities and move tasks between quadrants as needed.</p>
+                            </div>
+                            <div class="help-practice">
+                                <h4>✂️ Break Down Big Tasks</h4>
+                                <p>Large projects should be broken into smaller, actionable tasks for better tracking.</p>
+                            </div>
+                            <div class="help-practice">
+                                <h4>🎉 Celebrate Wins</h4>
+                                <p>Mark tasks complete regularly to track progress and stay motivated!</p>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Troubleshooting -->
+                    <section class="help-section">
+                        <h3 class="help-section-title">🔧 Troubleshooting</h3>
+                        <div class="help-faq">
+                            <div class="help-faq-item">
+                                <h4>❓ My tasks disappeared!</h4>
+                                <p>Check the different tabs - your tasks might be in the Completed tab or one of the quadrant tabs. If you logged out and back in, your tasks are stored in your account.</p>
+                            </div>
+                            <div class="help-faq-item">
+                                <h4>❓ Token won't drag</h4>
+                                <p>Make sure you're clicking directly on the token (colored circle). Completed tasks can't be dragged - unmark them as done first.</p>
+                            </div>
+                            <div class="help-faq-item">
+                                <h4>❓ How do I reset my tasks?</h4>
+                                <p>Open Settings → Advanced tab → "Reset Tasks" button. Warning: This deletes all tasks permanently!</p>
+                            </div>
+                            <div class="help-faq-item">
+                                <h4>❓ Can I access my tasks from different devices?</h4>
+                                <p>Yes! Your tasks are saved to your account. Just log in from any device to access them.</p>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- About the Method -->
+                    <section class="help-section">
+                        <h3 class="help-section-title">📚 About the Eisenhower Matrix</h3>
+                        <p class="help-text">The Eisenhower Matrix, also known as the Urgent-Important Matrix, was popularized by U.S. President Dwight D. Eisenhower. He famously said:</p>
+                        <blockquote class="help-quote">
+                            "What is important is seldom urgent, and what is urgent is seldom important."
+                        </blockquote>
+                        <p class="help-text">This method helps you distinguish between tasks that are truly important versus those that just seem urgent, enabling better decision-making and time management.</p>
+                    </section>
+                </div>
+                
+                <div class="help-footer">
+                    <button id="closeHelpFooterBtn" class="primary-btn">Got It!</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <template id="taskItemTemplate">
+        <li class="task-item">
+            <div class="token-wrapper">
+                <div class="token" draggable="true"></div>
+            </div>
+            <button class="done-btn" type="button" aria-label="Mark task done" title="Done">✔</button>
+            <span class="task-number"></span>
+            <span class="task-title" contenteditable="false"></span>
+            <button class="edit-btn" type="button" aria-label="Edit task" title="Edit">✎</button>
+            <button class="delete-btn" type="button" aria-label="Delete task" title="Delete">✖</button>
+        </li>
+    </template>
+    
+    <!-- Django CSRF Token for AJAX requests -->
+    <script>
+        // Pass Django CSRF token to JavaScript
+        window.CSRF_TOKEN = '{{ csrf_token }}';
+        window.API_BASE_URL = '/api';
+    </script>
+    <script src="{% static 'main-django.js' %}?v=2.1"></script>
+</body>
+
+</html>
